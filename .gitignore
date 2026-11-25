@@ -1,0 +1,19 @@
+# Binaries & build output
+/bin/
+*.exe
+*.out
+*.test
+
+# Environment files
+.env
+.env.local
+
+# Frontend
+web/node_modules/
+web/dist/
+web/.vite/
+web/coverage/
+
+# OS & Editor
+.DS_Store
+Thumbs.db
