@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: tutorgrid_test
+          POSTGRES_USER: tutorgrid_migrator
+          POSTGRES_PASSWORD: tutorgrid_migrator_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U tutorgrid_migrator -d tutorgrid_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Create non-superuser app role
+        env:
+          PGPASSWORD: tutorgrid_migrator_dev
+        run: |
+          command -v psql >/dev/null 2>&1 || (sudo apt-get update && sudo apt-get install -y postgresql-client)
+          psql -h localhost -U tutorgrid_migrator -d tutorgrid_test -v ON_ERROR_STOP=1 -c "
+            CREATE ROLE tutorgrid_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS PASSWORD 'tutorgrid_app_dev';
+            GRANT CONNECT ON DATABASE tutorgrid_test TO tutorgrid_app;
+            GRANT USAGE ON SCHEMA public TO tutorgrid_app;
+            ALTER DEFAULT PRIVILEGES FOR ROLE tutorgrid_migrator IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tutorgrid_app;
+          "
+      - name: Vet and Build
+        run: |
+          go vet ./...
+          go build ./cmd/api ./cmd/migrate
+      - name: Unit and PostgreSQL RLS Integration Tests
+        env:
+          TEST_DATABASE_MIGRATION_URL: postgres://tutorgrid_migrator:tutorgrid_migrator_dev@localhost:5432/tutorgrid_test?sslmode=disable
+          TEST_DATABASE_URL: postgres://tutorgrid_app:tutorgrid_app_dev@localhost:5432/tutorgrid_test?sslmode=disable
+        run: go test -race -count=1 -v ./...
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
