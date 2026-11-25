@@ -8,14 +8,21 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.16.6
 	github.com/pressly/goose/v3 v3.30.1
+	github.com/thecodearcher/limen v0.2.5
+	github.com/thecodearcher/limen/adapters/sql v0.2.2
+	github.com/thecodearcher/limen/plugins/oauth v0.2.2
+	github.com/thecodearcher/limen/plugins/oauth-github v0.2.3
+	github.com/thecodearcher/limen/plugins/oauth-google v0.2.3
 	github.com/uptrace/bun v1.3.0
 	github.com/uptrace/bun/dialect/pgdialect v1.3.0
 	github.com/uptrace/bun/driver/pgdriver v1.3.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
@@ -32,6 +39,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
+	golang.org/x/oauth2 v0.35.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect

@@ -48,6 +48,7 @@ Before changing code, read `docs/PRODUCT_CONSTITUTION.md`, `docs/MVP_SCOPE.md`, 
 - Never silently confirm unresolved recommendations. Keep unapproved choices (e.g., guest learner access, learner media permission tiers, whiteboard renderer, math renderer, pilot concurrency targets) explicitly labeled **Open** or **Recommended (Pending Approval)** until explicitly approved.
 - Before implementing the Whiteboard Engine, define the TutorGrid-owned document schema and submit a renderer comparison recommending one MVP renderer for explicit approval.
 - Always ask the engineer for real external inputs—never use dummy links, fake credentials, mock bypasses, or shortcuts. When a task requires a real repository URL, service/endpoint URL, secret link, OAuth callback URL, provider account, API key, or credential, stop and ask for the real input explicitly. Ask directly in chat for real links/URLs; for secrets/credentials, list the exact required environment variable names and ask the engineer to configure the real values in local gitignored `.env` or GitHub/platform secret storage and confirm before proceeding (never commit or print secrets).
+- Use `Taskfile.yml` (go-task / `task`) for all local development, migration, test, lint, and build commands. Do not add a `Makefile` or a `scripts/` directory to this repository.
 
 ## Definition of done for every task
 1. Acceptance criteria are satisfied.

@@ -17,10 +17,10 @@ import (
 )
 
 func TestPostgreSQLRLSTenantIsolationAndPoolSafety(t *testing.T) {
-	migrationDSN := os.Getenv("TEST_DATABASE_MIGRATION_URL")
-	appDSN := os.Getenv("TEST_DATABASE_URL")
+	migrationDSN := os.Getenv("TUTORGRID_TEST_DATABASE_MIGRATION_URL")
+	appDSN := os.Getenv("TUTORGRID_TEST_DATABASE_URL")
 	if migrationDSN == "" || appDSN == "" {
-		t.Skip("set TEST_DATABASE_MIGRATION_URL and TEST_DATABASE_URL to run PostgreSQL RLS integration tests")
+		t.Skip("set TUTORGRID_TEST_DATABASE_MIGRATION_URL and TUTORGRID_TEST_DATABASE_URL to run PostgreSQL RLS integration tests")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)

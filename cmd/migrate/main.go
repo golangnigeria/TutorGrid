@@ -17,9 +17,9 @@ func main() {
 	direction := flag.String("direction", "up", "migration direction: up or down")
 	flag.Parse()
 
-	dsn := os.Getenv("DATABASE_MIGRATION_URL")
+	dsn := os.Getenv("TUTORGRID_DATABASE_MIGRATION_URL")
 	if dsn == "" {
-		fmt.Fprintln(os.Stderr, "DATABASE_MIGRATION_URL is required")
+		fmt.Fprintln(os.Stderr, "TUTORGRID_DATABASE_MIGRATION_URL is required")
 		os.Exit(1)
 	}
 

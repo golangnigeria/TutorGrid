@@ -9,6 +9,8 @@ export default defineConfig({
     proxy: {
       '/healthz': 'http://localhost:8080',
       '/readyz': 'http://localhost:8080',
+      '/auth': 'http://localhost:8080',
+      '/api': 'http://localhost:8080',
     },
   },
   test: {

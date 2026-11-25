@@ -53,8 +53,8 @@ jobs:
           go build ./cmd/api ./cmd/migrate
       - name: Unit and PostgreSQL RLS Integration Tests
         env:
-          TEST_DATABASE_MIGRATION_URL: postgres://tutorgrid_migrator:tutorgrid_migrator_dev@localhost:5432/tutorgrid_test?sslmode=disable
-          TEST_DATABASE_URL: postgres://tutorgrid_app:tutorgrid_app_dev@localhost:5432/tutorgrid_test?sslmode=disable
+          TUTORGRID_TEST_DATABASE_MIGRATION_URL: postgres://tutorgrid_migrator:tutorgrid_migrator_dev@localhost:5432/tutorgrid_test?sslmode=disable
+          TUTORGRID_TEST_DATABASE_URL: postgres://tutorgrid_app:tutorgrid_app_dev@localhost:5432/tutorgrid_test?sslmode=disable
         run: go test -race -count=1 -v ./...
 
   frontend:
