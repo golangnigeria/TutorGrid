@@ -2,9 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - "feat/**"
+      - "slice/**"
   pull_request:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,7 +20,11 @@ concurrency:
 
 jobs:
   backend:
+    name: Backend (Lint, Migrations & RLS Tests)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/backend
     services:
       postgres:
         image: postgres:16-alpine
@@ -30,12 +39,24 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: apps/backend/go.mod
           cache: true
+          cache-dependency-path: apps/backend/go.sum
+
       - name: Create non-superuser app role
         env:
           PGPASSWORD: tutorgrid_migrator_dev
@@ -47,30 +68,58 @@ jobs:
             GRANT USAGE ON SCHEMA public TO tutorgrid_app;
             ALTER DEFAULT PRIVILEGES FOR ROLE tutorgrid_migrator IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO tutorgrid_app;
           "
+
       - name: Vet and Build
         run: |
           go vet ./...
-          go build ./cmd/api ./cmd/migrate
+          go build ./cmd/tutorgrid ./cmd/migrate
+
+      - name: Verify Migration Up, Rollback & Re-apply
+        env:
+          TUTORGRID_DATABASE_MIGRATION_URL: postgres://tutorgrid_migrator:tutorgrid_migrator_dev@localhost:5432/tutorgrid_test?sslmode=disable
+        run: |
+          go run ./cmd/migrate
+          go run ./cmd/migrate -to 2
+          go run ./cmd/migrate
+
       - name: Unit and PostgreSQL RLS Integration Tests
         env:
           TUTORGRID_TEST_DATABASE_MIGRATION_URL: postgres://tutorgrid_migrator:tutorgrid_migrator_dev@localhost:5432/tutorgrid_test?sslmode=disable
           TUTORGRID_TEST_DATABASE_URL: postgres://tutorgrid_app:tutorgrid_app_dev@localhost:5432/tutorgrid_test?sslmode=disable
-        run: go test -race -count=1 -v ./...
+        run: go test -p 1 -race -count=1 -v ./...
+
+      - name: Go Vulnerability Check (govulncheck)
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
 
   frontend:
+    name: Frontend (Typecheck, Lint & Build)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '24'
-          cache: 'npm'
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck, Lint, and Build Frontend
+        working-directory: apps/frontend
+        run: |
+          bun run typecheck
+          bun run lint
+          bun run build
+
+  security:
+    name: Security (Secret Scan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

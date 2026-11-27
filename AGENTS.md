@@ -18,20 +18,20 @@ Before changing code, read `docs/MASTER_BLUEPRINT.md`, `docs/PRODUCT_CONSTITUTIO
 9. Tenant boundaries and backend authorization are required from the first release. Never trust frontend-only permissions.
 10. Never execute arbitrary teacher-uploaded code in a learner's browser/classroom. Activities use controlled components and configuration.
 
-## Approved stack (do not substitute without an approved ADR)
-- Frontend: React + Vite + `shadcn/ui`; responsive web for desktop, laptop, tablet and mobile (see `ADR 0004` for React 19 / TypeScript / Tailwind CSS v4).
-- Backend: Go + Echo, modular monolith.
-- Data: PostgreSQL, Bun for data access, Goose migrations.
-- Authentication: Limen (`github.com/thecodearcher/limen`); Google and GitHub OAuth; no email/password login in the current decision.
+## Approved stack (do not substitute without an approved ADR — updated by ADR 0005)
+- Frontend: React + Vite + `shadcn/ui`; responsive web in `apps/frontend` (Turborepo monorepo).
+- Backend: Go + Echo, modular monolith in `apps/backend` (Clean Architecture from `sriniously/go-boilerplate`).
+- Data: PostgreSQL, `pgx/v5` (`pgxpool`) for data access, `tern` migrations (per `ADR 0005`).
+- Authentication: Limen (`github.com/thecodearcher/limen`); Google and GitHub OAuth; no email/password login (replaced Clerk).
 - Authorization: RBAC plus resource-level permissions; tenant-aware backend checks and PostgreSQL RLS as defense in depth.
-- Cache/temporary state: Redis.
+- Cache & Background Jobs: Redis + Asynq (per `ADR 0005`).
 - Application realtime: Centrifugo.
 - Media: LiveKit (mandatory) — LiveKit Cloud initially; Hetzner Cloud self-hosting is a later evaluation, not MVP.
 - Object storage: Backblaze B2 via S3-compatible abstraction (MinIO container in local dev sharing the single S3 adapter; production blocked from MinIO).
-- Jobs/events: NATS JetStream, small MVP deployment.
+- Email: Resend (real `TUTORGRID_INTEGRATION.RESEND_API_KEY` required).
 - API: REST + OpenAPI for external/public use; gRPC only where useful internally.
 - Hosting & Edge: Northflank candidate/initial deployment, Cloudflare DNS/CDN, Docker, GitHub Actions, GHCR, Terraform.
-- Observability: OpenTelemetry, Prometheus/Grafana and Sentry, with practical MVP dashboards/alerts.
+- Observability: New Relic APM + Zerolog structured logging (per `ADR 0005`; real `TUTORGRID_OBSERVABILITY.NEW_RELIC.LICENSE_KEY` required).
 - Search/analytics: PostgreSQL initially; Elasticsearch and ClickHouse are later growth choices, not required MVP services.
 
 ## Engineering behavior
@@ -49,6 +49,8 @@ Before changing code, read `docs/MASTER_BLUEPRINT.md`, `docs/PRODUCT_CONSTITUTIO
 - Before implementing the Whiteboard Engine, define the TutorGrid-owned document schema and submit a renderer comparison recommending one MVP renderer for explicit approval.
 - Always ask the engineer for real external inputs—never use dummy links, fake credentials, mock bypasses, or shortcuts. When a task requires a real repository URL, service/endpoint URL, secret link, OAuth callback URL, provider account, API key, or credential, stop and ask for the real input explicitly. Ask directly in chat for real links/URLs; for secrets/credentials, list the exact required environment variable names and ask the engineer to configure the real values in local gitignored `.env` or GitHub/platform secret storage and confirm before proceeding (never commit or print secrets).
 - Use `Taskfile.yml` (go-task / `task`) for all local development, migration, test, lint, and build commands. Do not add a `Makefile` or a `scripts/` directory to this repository.
+- Backend SQL convention: use `pgx.StrictNamedArgs` with `@snake_case` named parameters across `apps/backend/internal/repository/*` and `apps/backend/internal/database/rls.go` (avoid positional `$1`/`$2` placeholders in Go SQL queries).
+- Frontend UI convention: strict dark-only app shell for **TutorGrid Circle** using the **Dark Forest-Moss & Warm Stone** palette extracted from Watermelon UI `hero-34` — Deep Pine-Charcoal base (`#101411`), Frosted Moss-Slate surfaces (`#181F1A`/82 `backdrop-blur-md`), Muted Sage primary accent (`#8FAF94`), Warm Sand secondary highlight (`#D6C29F`), Warm Parchment headings/ink (`#F3F0E8`), and Soft Stone-Sage muted ink (`#A6B0A8`), with hairline borders, no heavy drop shadows or AI-style neon glows/gradients, subtle `motion/react` micro-interactions, and no light mode toggle. Uses `/tutorgrid-bg.avif` as the visible full-bleed backdrop behind frosted surfaces, fixed auth-dynamic Watermelon UI `navigation-7` header pill, `hero-34` landing (`/`), fixed centered floating native-mobile-style bottom tab dock (`MobileFooterDock`) across all screen sizes, and routes `/`, `/dashboard`, `/sign-in`, `/sign-out`. Future Lesson Studio and Whiteboard canvases may expose isolated canvas-only background surfaces inside the dark studio chrome. Typography uses `Inter` (400–600, `--font-sans`) for workspace UI, forms, tables, and body copy, and `Fredoka` (500–600, SIL OFL, `--font-display`) strictly for brand wordmark, page headings, onboarding title, and selected educational accents.
 
 ## Definition of done for every task
 1. Acceptance criteria are satisfied.

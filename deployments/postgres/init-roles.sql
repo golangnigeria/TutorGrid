@@ -15,7 +15,6 @@ BEGIN
 END
 $$;
 
--- Configure privileges on the development database.
 GRANT CONNECT ON DATABASE tutorgrid TO tutorgrid_app;
 GRANT USAGE ON SCHEMA public TO tutorgrid_app;
 ALTER DEFAULT PRIVILEGES FOR ROLE tutorgrid_migrator IN SCHEMA public
@@ -23,7 +22,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE tutorgrid_migrator IN SCHEMA public
 ALTER DEFAULT PRIVILEGES FOR ROLE tutorgrid_migrator IN SCHEMA public
     GRANT USAGE, SELECT ON SEQUENCES TO tutorgrid_app;
 
--- Create an isolated test database for integration and migration tests.
 CREATE DATABASE tutorgrid_test OWNER tutorgrid_migrator;
 GRANT CONNECT ON DATABASE tutorgrid_test TO tutorgrid_app;
 

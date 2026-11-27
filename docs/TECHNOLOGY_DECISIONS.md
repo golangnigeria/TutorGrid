@@ -18,7 +18,7 @@
 | **Task Runner** | `Taskfile.yml` (go-task / `task`); no `Makefile` or `scripts/` | Confirmed | Explicit Product-Owner Decision (2026-11-25) | — |
 | **Backend Language & HTTP** | Go + Echo | Confirmed | Master Blueprint §17.2, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
 | **Primary Database** | PostgreSQL (relational + selective JSONB) | Confirmed | Master Blueprint §11, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
-| **DB Access & Migrations** | Bun + Goose (expand-and-contract, CI tested) | Confirmed | Master Blueprint §11.2–11.3, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
+| **DB Access & Migrations** | `pgx/v5` (`pgxpool`) + `tern` *(supersedes Bun + Goose)* | Confirmed | Explicit Product-Owner Decision (2026-11-27); ADR 0005 | [`ADR 0005`](./ADR/0005-go-boilerplate-pgx-tern-asynq-newrelic.md) |
 | **Multi-Tenancy & Isolation** | Shared DB/schema + `tenant_id`, Go authz + PostgreSQL RLS (dedicated DB later if needed) | Confirmed | Master Blueprint §6.4, §11.6, §23 | [`ADR 0002`](./ADR/0002-embedded-limen-oauth-and-rls-tenancy.md) *(Proposed)* |
 | **Authentication** | Limen (`github.com/thecodearcher/limen`) — Google & GitHub OAuth only; no email/password | Confirmed | Master Blueprint §6.1, §23; ADR 0001 | [`ADR 0002`](./ADR/0002-embedded-limen-oauth-and-rls-tenancy.md) *(Proposed)* |
 | **Authorization** | RBAC + resource-level permissions (backend authoritative) | Confirmed | Master Blueprint §6.3, §23; ADR 0001 | [`ADR 0002`](./ADR/0002-embedded-limen-oauth-and-rls-tenancy.md) *(Proposed)* |
@@ -30,7 +30,7 @@
 | **Video / Audio / WebRTC** | **LiveKit** (mandatory; LiveKit Cloud initially, Hetzner Cloud candidate for later self-hosting) | Confirmed | Master Blueprint §8, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
 | **Object Storage (Prod/Staging)** | Backblaze B2 (S3-compatible API, direct presigned PUT/GET) | Confirmed | Master Blueprint §9.1–9.3, §23; ADR 0001 | [`ADR 0003`](./ADR/0003-direct-s3-b2-presigned-storage.md) *(Proposed)* |
 | **Object Storage (Local Dev)** | MinIO container sharing the single S3-compatible Go adapter (blocked in prod) | Confirmed | Master Blueprint §9.4, §23; Explicit PO Decision (2026-11-25) | [`ADR 0003`](./ADR/0003-direct-s3-b2-presigned-storage.md) *(Proposed)* |
-| **Jobs & Durable Events** | NATS JetStream + transactional outbox + idempotent consumers | Confirmed | Master Blueprint §10, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
+| **Jobs & Background Queues** | Asynq (Redis-backed) *(supersedes NATS JetStream)* | Confirmed | Explicit Product-Owner Decision (2026-11-27); ADR 0005 | [`ADR 0005`](./ADR/0005-go-boilerplate-pgx-tern-asynq-newrelic.md) |
 | **API Architecture** | Hybrid REST + OpenAPI (URL major versions) + selective internal gRPC | Confirmed | Master Blueprint §16, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
 | **Whiteboard Strategy** | TutorGrid-owned document schema; long-term hybrid Konva + tldraw | Confirmed (long-term) | Master Blueprint §4.2, §23; ADR 0001 | — *(MVP renderer Open)* |
 | **Media Processing** | Hybrid self-managed (FFmpeg, LibreOffice, Go libraries) via async NATS workers | Confirmed (Future) | Master Blueprint §9.5 | — |
@@ -38,7 +38,8 @@
 | **Analytics** | PostgreSQL initially; **ClickHouse** + NATS/Redis/Centrifugo real-time pipeline as volume grows | Confirmed (Future) | Master Blueprint §14, §23 | — |
 | **Hosting & Delivery** | Docker initially (K8s later if justified), Northflank preferred candidate, GitHub Actions, GHCR, Terraform, Cloudflare DNS/CDN | Confirmed direction (validate Northflank) | Master Blueprint §18, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
 | **Secrets Management** | Northflank secrets initially; Vault later if justified | Confirmed direction | Master Blueprint §18.5, §23 | — |
-| **Observability** | OpenTelemetry + Prometheus + Grafana + Sentry | Confirmed | Master Blueprint §19.1, §23; ADR 0001 | [`ADR 0001`](./ADR/0001-approved-stack-and-mvp.md) |
+| **Observability** | New Relic APM + Zerolog *(supersedes OTel/Prometheus/Grafana/Sentry)* | Confirmed | Explicit Product-Owner Decision (2026-11-27); ADR 0005 | [`ADR 0005`](./ADR/0005-go-boilerplate-pgx-tern-asynq-newrelic.md) |
+| **Transactional Email** | Resend (`resend-go/v2`) | Confirmed | Explicit Product-Owner Decision (2026-11-27); ADR 0005 | [`ADR 0005`](./ADR/0005-go-boilerplate-pgx-tern-asynq-newrelic.md) |
 
 ---
 

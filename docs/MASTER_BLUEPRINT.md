@@ -4,6 +4,8 @@
 
 **Purpose:** This document consolidates the TutorGrid product and technical decisions made during the planning discussions, including the extensive architecture decision process covering more than 140 questions.
 
+> **Amendment (`ADR 0005`, 2026-11-27):** By explicit product-owner decision, TutorGrid adopted `sriniously/go-boilerplate` (`apps/backend`, `apps/frontend`, `packages/*`) with **Limen** (Google/GitHub OAuth) replacing Clerk, **`pgx/v5` + `tern`** replacing Bun + Goose, **Asynq/Redis** replacing NATS JetStream, **New Relic + Zerolog** replacing OpenTelemetry/Prometheus/Grafana/Sentry, and **Resend** for transactional email. See [`docs/ADR/0005-go-boilerplate-pgx-tern-asynq-newrelic.md`](./ADR/0005-go-boilerplate-pgx-tern-asynq-newrelic.md).
+
 **Scope exclusion:** This document intentionally excludes the MVP delivery plan, MVP milestones, first-1,000-users roadmap, MVP feature prioritisation and MVP implementation sequence. It describes the complete intended TutorGrid platform. Keep MVP planning in a separate document.
 
 Use this as the consolidated reference for product intent and explicitly recorded decisions. If an older document conflicts with a confirmed decision here, flag the conflict and propose a documentation correction. Do not silently discard requirements.

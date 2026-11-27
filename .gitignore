@@ -8,11 +8,12 @@
 .env
 .env.local
 
-# Frontend
-web/node_modules/
-web/dist/
-web/.vite/
-web/coverage/
+# Frontend & Monorepo
+node_modules/
+dist/
+.vite/
+.turbo/
+coverage/
 *.tsbuildinfo
 
 # OS & Editor

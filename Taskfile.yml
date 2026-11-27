@@ -7,7 +7,7 @@ vars:
 
 tasks:
   dev:
-    desc: Start PostgreSQL, apply migrations, and launch Go API + React/Vite web together
+    desc: Start PostgreSQL + Redis, run tern migrations, and launch Go API + frontend together
     cmds:
       - task: db:up
       - task: migrate:up
@@ -20,90 +20,55 @@ tasks:
       - dev:web
 
   dev:api:
-    desc: Run the Go + Echo API server (http://localhost:8080)
+    desc: Run the Go + Echo backend (apps/backend)
+    dir: apps/backend
     cmds:
-      - go run ./cmd/api
+      - go run ./cmd/tutorgrid
 
   dev:web:
-    desc: Run the React + Vite dev server (http://localhost:5173)
-    dir: web
+    desc: Run the frontend dev server (apps/frontend)
+    dir: apps/frontend
     cmds:
-      - npm run dev
+      - bun run dev
 
   db:up:
-    desc: Start local PostgreSQL container and wait until healthy
+    desc: Start local PostgreSQL 16 and Redis 7 containers and wait until healthy
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} up -d --wait
 
   db:down:
-    desc: Stop local PostgreSQL container
+    desc: Stop local PostgreSQL and Redis containers
     cmds:
       - docker compose -f {{.COMPOSE_FILE}} down
 
   migrate:up:
-    desc: Apply pending Goose database migrations
+    desc: Apply pending tern database migrations
+    dir: apps/backend
     cmds:
-      - go run ./cmd/migrate -direction=up
-
-  migrate:down:
-    desc: Roll back Goose database migrations to version 0
-    cmds:
-      - go run ./cmd/migrate -direction=down
-
-  test:
-    desc: Run all backend (unit + PostgreSQL RLS/auth) and frontend tests
-    cmds:
-      - task: test:go
-      - task: test:web
-
-  test:go:
-    desc: Run all Go unit and PostgreSQL RLS/auth integration tests
-    cmds:
-      - go test -v -count=1 ./...
-
-  test:go:unit:
-    desc: Run Go unit tests only (no database required)
-    cmds:
-      - go test -short -v ./...
-
-  test:web:
-    desc: Run frontend Vitest test suite
-    dir: web
-    cmds:
-      - npm test
-
-  lint:
-    desc: Run Go vet and frontend ESLint + TypeScript typecheck
-    cmds:
-      - task: vet
-      - task: web:lint
-      - task: web:typecheck
+      - go run ./cmd/migrate
 
   vet:
-    desc: Run go vet on backend packages
+    desc: Run go vet on apps/backend
+    dir: apps/backend
     cmds:
       - go vet ./...
 
-  build:
-    desc: Build Go binaries and frontend production bundle
+  build:api:
+    desc: Build the Go backend and migrator binaries
+    dir: apps/backend
     cmds:
-      - go build ./cmd/api ./cmd/migrate
-      - task: web:build
+      - go build -o NUL ./cmd/tutorgrid
+      - go build -o NUL ./cmd/migrate
 
-  web:lint:
-    desc: Run ESLint in web/
-    dir: web
+  test:go:
+    desc: Run Go tests in apps/backend
+    dir: apps/backend
     cmds:
-      - npm run lint
+      - go test -p 1 -v -count=1 ./...
 
-  web:typecheck:
-    desc: Run TypeScript typecheck in web/
-    dir: web
+  tidy:
+    desc: Tidy and verify Go dependencies in apps/backend
+    dir: apps/backend
     cmds:
-      - npm run typecheck
-
-  web:build:
-    desc: Build React/Vite production bundle in web/
-    dir: web
-    cmds:
-      - npm run build
+      - go mod tidy
+      - go mod verify
