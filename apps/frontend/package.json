@@ -28,7 +28,7 @@
     "clsx": "^2.1.1",
     "cn": "^0.5.2",
     "framer-motion": "^14.14.0",
-    "lucide-react": "^0.536.0",
+    "lucide-react": "^1.79.0",
     "motion": "^14.14.0",
     "radix-ui": "^1.8.1",
     "react": "^19.1.0",
