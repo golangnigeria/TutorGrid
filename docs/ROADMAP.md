@@ -1,88 +1,93 @@
 # TutorGrid Strategic Roadmap — MVP to First 1,000 Users
 
-## Phase 0 — Product and repo foundation
-- Confirm MVP feature list and pilot success measures.
-- Create repository structure, AGENTS.md, product specs, ADR process.
-- Establish lint/typecheck/test/build commands and CI.
-- Create dev/staging/prod configuration policy and secret handling.
-- Define tenant/resource ownership and access model before protected feature work.
-- Select one whiteboard renderer after a small proof-of-concept and license check.
+**Long-Term Vision Reference:** [`docs/MASTER_BLUEPRINT.md`](./MASTER_BLUEPRINT.md) · [`docs/PRODUCT_CAPABILITY_MAP.md`](./PRODUCT_CAPABILITY_MAP.md) · [`docs/TECHNOLOGY_DECISIONS.md`](./TECHNOLOGY_DECISIONS.md)  
+**Scope Note:** This roadmap sequences the **MVP and first 1,000 registered users** (capacity defined by measured pilot concurrency, not raw registration count). Full long-term capabilities (Elasticsearch, ClickHouse, full white-label, external APIs/SDKs, AI co-pilot, Hetzner self-hosted LiveKit) remain preserved in `docs/PRODUCT_CAPABILITY_MAP.md` and are phased after MVP.
 
-Exit gate: repo is reproducible, rules/docs are loaded, CI runs, architecture boundaries are documented.
+---
 
-## Phase 1 — Secure platform skeleton
-- React/Vite shell, routing, responsive layout.
-- Go/Echo API, health/readiness endpoints, config validation.
-- Limen Google/GitHub auth integration.
-- Profile, tenant membership and minimal roles.
-- PostgreSQL schema, Bun, Goose migration workflow.
-- Tenant authorization middleware/service policy and RLS baseline.
-- B2 signed upload/download abstraction.
+## Phase 0 — Product & Repository Foundation *(Completed — `slice/01-foundation`)*
+- [x] Establish `AGENTS.md`, constitution, master blueprint, capability map, technology decision register, and ADR process.
+- [x] Initialize Go + Echo + Bun + Goose backend skeleton, React + Vite responsive web shell, `Taskfile.yml` (no `Makefile` or `scripts/`), and GitHub Actions CI.
+- [x] Establish local PostgreSQL (`deployments/docker-compose.dev.yml`) with non-superuser `tutorgrid_app` (`NOSUPERUSER NOBYPASSRLS`) and `tutorgrid_test`.
+- [x] Prove fail-closed `FORCE ROW LEVEL SECURITY` and pooled-connection tenant isolation via real PostgreSQL integration tests.
 
-Exit gate: authenticated users can access only their authorized tenant resources; migration and CI checks pass.
+**Exit gate:** Repo is reproducible via `Taskfile.yml`, rules/docs are reconciled, CI runs real PostgreSQL RLS tests, and architecture boundaries are documented.
 
-## Phase 2 — Lesson Studio vertical slice
-- Create/edit lesson metadata.
-- Add/reorder sections and basic content blocks.
-- Attach resources.
-- Save draft, preview and publish immutable version.
-- Lesson listing/detail and ownership/sharing checks.
+---
 
-Exit gate: teacher completes create → edit → preview → publish; version immutability and tenant isolation tests pass.
+## Phase 1 — Secure Platform Skeleton *(Auth Done — `slice/02-limen-auth`; Storage Next — Slice 3)*
+- [x] **Slice 2 (Implemented, Pending ADR 0002 Security Review):** Embedded Limen (`github.com/thecodearcher/limen`) Google & GitHub OAuth (no email/password), `limen_*` schema coexistence, verified user/membership lookup deriving `tenancy.Context` server-side (zero client tenant header trust), RBAC baseline (`platform_admin`, `org_admin`, `teacher`, `learner`), onboarding (Create Teaching Space / Accept Invitation), and React sign-in/onboarding shell.
+- [ ] **Slice 3 (Next — Planned in `ADR 0003` & `ADR 0004`):**
+  - Single S3-compatible Go storage adapter shared by **MinIO** (local Docker Compose) and **Backblaze B2** (staging/production), with production guard blocking local/MinIO endpoints.
+  - Two-step direct presigned PUT upload (`pending` → `HeadObject` + magic-byte validation → idempotent `ready`), 25 MB cap, MIME allowlist (PNG, JPEG, WebP, PDF, PPT, PPTX; no raw SVG), 5-min presigned GET, abandoned-upload cleanup, and async malware-scan extension point (ready for NATS JetStream).
+  - Begin progressive adoption of confirmed **`shadcn/ui`** components in `web/` (pending `ADR 0004` sign-off).
+  - Backblaze B2 setup guide (`docs/STORAGE_BACKBLAZE_B2_GUIDE.md`); **mandatory real B2 staging verification** before production reliance (`OD-11`).
 
-## Phase 3 — Whiteboard vertical slice
-- TutorGrid-owned board schema, pages and basic objects.
-- Renderer adapter and basic drawing/selection/undo.
-- Save/load, teacher view, learner view-only and learner drawing permission.
-- Centrifugo updates and reconnect/recovery.
-- Attach board to lesson and create live copy/session state.
+**Exit gate:** Authenticated users access only authorized tenant resources; direct presigned uploads, magic-byte validation, tenant isolation, and CI checks pass; `ADR 0002` security review completed.
 
-Exit gate: two clients collaborate, permissions are enforced server-side, state recovers after reconnect, authored board is protected from live changes.
+---
 
-## Phase 4 — Classroom + LiveKit vertical slice
-- Create/start/end session from published lesson version.
-- Invite/join and participant lifecycle.
-- LiveKit Cloud room/token adapter.
-- Mic/camera UI and teacher-controlled learner media permissions.
-- Lesson navigation, presence and session persistence.
+## Phase 2 — Lesson Studio Vertical Slice *(Slice 4)*
+- Create, edit, save, duplicate, and archive lessons with extensible metadata (title, subject, grade/age band, topic, objectives, duration).
+- Ordered sections/steps with add, edit, reorder, and delete (structured content blocks—never one opaque HTML blob).
+- Attach uploaded PDF/PowerPoint/image resources as reference materials (no silent auto-conversion into editable lessons).
+- Explicit draft autosave, preview, and **immutable `lesson_versions` publishing**.
+- *Open decision before coding:* Confirm math/equation renderer (`OD-06`, KaTeX recommended).
 
-Exit gate: teacher and learner can run a real test lesson; unauthorized join/media publish is rejected; end/reconnect flows are tested.
+**Exit gate:** Teacher completes create → edit → attach resource → preview → publish; version immutability and cross-tenant isolation tests pass.
 
-## Phase 5 — Activity engine vertical slice
-- Activity definition/runtime contract.
-- Starter template(s): quiz and one interaction type such as matching/sorting.
-- Teacher configures and previews activity.
-- Launch in classroom, learner submits, teacher sees result.
-- Idempotent result persistence and basic feedback.
+---
 
-Exit gate: complete activity flow works with multiple learners and results persist without duplicate submissions.
+## Phase 3 — Whiteboard Engine Vertical Slice *(Slice 5)*
+- **Mandatory Pre-Slice Gate (`OD-01`, `OD-02`, `OD-03`):**
+  1. Define the **TutorGrid-owned whiteboard document schema** (`whiteboard-core`) independent of any renderer.
+  2. Submit a **Konva vs. tldraw** renderer comparison (including written tldraw licensing verification for multi-tenant SaaS, embedding, redistribution, and white-label if commercial SDK is considered) and receive explicit approval for **one MVP renderer**. Do not build both renderers in MVP.
+  3. Confirm exact CRDT library/collaboration strategy (`OD-03`).
+- Implement single approved renderer adapter (`whiteboard-konva` or `whiteboard-tldraw`), multi-page + expandable pan/zoom canvas, basic tools, save/load, teacher/learner permissions, and **Centrifugo** + **Redis** realtime sync with coalesced updates and reconnect recovery.
+- Separate prepared lesson board from isolated live classroom session copy.
 
-## Phase 6 — Pilot hardening
-- Real teacher/learner usability sessions.
-- Responsive browser/device checks.
-- Security review: tenant isolation, access links, tokens, file URLs, permissions, XSS/input validation.
-- Load test against explicit pilot profile.
-- Backup/restore rehearsal, deployment rollback rehearsal.
-- Monitoring dashboards, alerts, incident runbooks.
-- Fix critical UX friction and reliability issues; do not expand scope.
+**Exit gate:** Two clients collaborate with server-enforced permissions, state survives refresh/reconnect, and prepared boards are protected from live session mutations.
 
-Exit gate: pilot acceptance criteria pass, known limitations documented, operational owner/runbooks exist.
+---
 
-## Phase 7 — First 1,000 users
-- Gradually onboard cohorts; observe usage and support issues.
-- Track weekly active teachers/learners, classrooms/week, lesson completion, activity use, reconnect rate, media minutes, error rates and cost per active classroom.
-- Scale managed resources based on measured bottlenecks.
-- Prioritize reliability and teacher workflow improvements over new infrastructure.
+## Phase 4 — Live Classroom + LiveKit Cloud Vertical Slice *(Slice 6)*
+- Create/start/end classroom session pinned to an immutable published `lesson_version_id`.
+- Authorized participant join flow (*Open decision `OD-04`: guest learner access policy*).
+- **Mandatory LiveKit Cloud** audio/video/screen-sharing adapter with short-lived backend-issued tokens (Hetzner self-hosting deferred post-MVP).
+- Learner media permission controls (*Recommended, Pending Approval `OD-05`: learners join media-disabled by default; teacher grants/revokes server-side*).
+- Guided and free lesson navigation, Centrifugo presence/events, and persisted session/participation records.
 
-## Suggested product metrics
-- Activation: teacher creates and publishes first lesson.
-- Classroom success: session starts and ends without critical failure.
-- Learner join success and time-to-join.
-- Lesson reuse and repeat classroom usage.
-- Activity completion and submission success.
-- Whiteboard recovery after reconnect.
-- Core-flow error rate and support tickets.
-- Cost per active classroom/hour.
+**Exit gate:** Teacher and learner complete a live test lesson; unauthorized join/media publish is rejected server-side; reconnect and end-session flows are tested.
 
-## Scope-change process
-Any proposed feature must state: user value, MVP necessity, dependencies, estimate/risk, security/privacy impact, cost/operational impact, and what is removed/deferred if it is added. Product owner approves scope changes.
+---
+
+## Phase 5 — Educational Activity/Game Engine Vertical Slice *(Slice 7)*
+- Declarative, sandboxed activity runtime contract (zero arbitrary teacher-uploaded code execution).
+- Approved starter templates (*Open decision `OD-08`: finalize count/types from quiz, matching, sorting, fill-in-the-blank*).
+- Teacher configuration and preview in Lesson Studio; launch inside Live Classroom; individual gameplay first plus basic teacher-led shared activity.
+- Server-validated, idempotent result persistence and basic teacher review.
+
+**Exit gate:** Multi-learner classroom activity flow completes with idempotent result persistence and zero duplicate submissions.
+
+---
+
+## Phase 6 — Pilot Hardening & Operational Readiness
+- Real teacher/learner usability sessions and responsive desktop/tablet/mobile browser checks.
+- Security & tenant-isolation audit (RLS, tokens, signed B2 URLs, permissions, XSS/input validation, audit trail coverage).
+- Real **Backblaze B2** staging CORS & presigned URL verification (`OD-11`) and **Northflank** capability validation (`OD-10`).
+- Load test against an explicit pilot concurrency profile (`OD-07`), not raw registered-user count.
+- Backup/restore rehearsal against pilot RPO/RTO targets (24h/24h initial), deployment rollback rehearsal, and OpenTelemetry/Prometheus/Grafana/Sentry dashboards & alerts.
+
+**Exit gate:** Pilot acceptance criteria pass, known limitations documented, and operational runbooks exist.
+
+---
+
+## Phase 7 — First 1,000 Users Cohort Rollout & Post-MVP Evolution
+- Gradually onboard pilot cohorts; measure activation, classroom reliability, learner join success, activity completion, whiteboard reconnect recovery, error rate, and cost per active classroom hour.
+- Scale managed resources strictly from measured bottlenecks.
+- Post-MVP capabilities (preserved in [`docs/PRODUCT_CAPABILITY_MAP.md`](./PRODUCT_CAPABILITY_MAP.md)): advanced visual game builder, dual whiteboard renderer option, FFmpeg/LibreOffice async NATS media processing, Elasticsearch search, ClickHouse analytics, external partner APIs/SDKs & white-label, Hetzner self-hosted LiveKit evaluation, and teacher-reviewed AI co-pilot.
+
+---
+
+## Scope-Change Process
+Any proposed scope change must state: user value, MVP necessity, dependencies, estimate/risk, security/privacy impact, cost/operational impact, and what is deferred if added. Product owner approves all scope changes.

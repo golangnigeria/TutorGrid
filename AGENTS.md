@@ -4,7 +4,7 @@
 Build TutorGrid as a teaching and learning creation-and-delivery platform. TutorGrid is not an LMS, school administration system, tutor CRM, or generic video-meeting clone. Its core product is the Lesson Studio, Whiteboard Engine, and Educational Activity/Game Engine, delivered through Live Classroom and available standalone or embedded.
 
 ## Source of truth
-Before changing code, read `docs/PRODUCT_CONSTITUTION.md`, `docs/MVP_SCOPE.md`, `docs/PRODUCT_SPEC.md`, and `docs/ARCHITECTURE.md`. For the task's module, read the relevant `.agents/rules/*.md` file and existing ADRs. Existing code and tests are evidence of implementation, not permission to change product decisions.
+Before changing code, read `docs/MASTER_BLUEPRINT.md`, `docs/PRODUCT_CONSTITUTION.md`, `docs/PRODUCT_CAPABILITY_MAP.md`, `docs/MVP_SCOPE.md`, `docs/PRODUCT_SPEC.md`, `docs/ARCHITECTURE.md`, and `docs/TECHNOLOGY_DECISIONS.md`. For the task's module, read the relevant `.agents/rules/*.md` file and existing ADRs in `docs/ADR/`. Existing code and tests are evidence of implementation, not permission to change product decisions.
 
 ## Non-negotiable product rules
 1. Do not invent, remove, simplify, or materially reinterpret product requirements. If a requirement is unclear or conflicts with a source document, stop and ask one focused question or propose an ADR; do not silently decide.
@@ -19,18 +19,18 @@ Before changing code, read `docs/PRODUCT_CONSTITUTION.md`, `docs/MVP_SCOPE.md`, 
 10. Never execute arbitrary teacher-uploaded code in a learner's browser/classroom. Activities use controlled components and configuration.
 
 ## Approved stack (do not substitute without an approved ADR)
-- Frontend: React + Vite; responsive web for desktop, laptop, tablet and mobile.
+- Frontend: React + Vite + `shadcn/ui`; responsive web for desktop, laptop, tablet and mobile (see `ADR 0004` for React 19 / TypeScript / Tailwind CSS v4).
 - Backend: Go + Echo, modular monolith.
 - Data: PostgreSQL, Bun for data access, Goose migrations.
-- Authentication: Limen; Google and GitHub OAuth; no email/password login in the current decision.
+- Authentication: Limen (`github.com/thecodearcher/limen`); Google and GitHub OAuth; no email/password login in the current decision.
 - Authorization: RBAC plus resource-level permissions; tenant-aware backend checks and PostgreSQL RLS as defense in depth.
 - Cache/temporary state: Redis.
 - Application realtime: Centrifugo.
-- Media: LiveKit Cloud initially; self-hosting on Hetzner is a later evaluation, not MVP.
-- Object storage: Backblaze B2 via S3-compatible abstraction.
+- Media: LiveKit (mandatory) — LiveKit Cloud initially; Hetzner Cloud self-hosting is a later evaluation, not MVP.
+- Object storage: Backblaze B2 via S3-compatible abstraction (MinIO container in local dev sharing the single S3 adapter; production blocked from MinIO).
 - Jobs/events: NATS JetStream, small MVP deployment.
 - API: REST + OpenAPI for external/public use; gRPC only where useful internally.
-- Hosting: Northflank candidate/initial deployment; Docker, GitHub Actions, GHCR, Terraform.
+- Hosting & Edge: Northflank candidate/initial deployment, Cloudflare DNS/CDN, Docker, GitHub Actions, GHCR, Terraform.
 - Observability: OpenTelemetry, Prometheus/Grafana and Sentry, with practical MVP dashboards/alerts.
 - Search/analytics: PostgreSQL initially; Elasticsearch and ClickHouse are later growth choices, not required MVP services.
 

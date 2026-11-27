@@ -66,7 +66,7 @@ MVP activities must support: start, pause/resume where needed, submit/complete, 
 - ClassroomSession references tenant, teacher, published lesson version, LiveKit room identifier and lifecycle state.
 - Backend owns room lifecycle, token issuance, participant authorization and permission changes.
 - LiveKit tokens are short-lived and narrowly scoped.
-- Teacher can grant/revoke learner mic/camera/screen share. Learners start media-disabled.
+- **Recommended (Pending Approval — Master Blueprint §8.6):** Teacher can grant/revoke learner mic/camera/screen share; learners start media-disabled. Backend enforces the approved policy.
 - A permission change is validated, applied to LiveKit, and recorded; do not update UI as successful until backend confirms.
 - Postgres stores durable session/participant/results. Redis holds temporary active state. Centrifugo broadcasts application updates. LiveKit carries audio/video/screen media.
 

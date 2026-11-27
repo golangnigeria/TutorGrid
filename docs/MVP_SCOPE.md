@@ -36,7 +36,7 @@ A teacher can create and organize a lesson, prepare visual teaching material, la
 - Create/start/end classroom linked to a published lesson version.
 - Join via authorized invite/access flow.
 - LiveKit Cloud audio/video; mic/camera controls and participant status.
-- Teacher may publish media; learners join with media disabled by default; teacher grants/revokes learner mic/camera/screen share. Backend enforces the policy.
+- **Recommended (Pending Approval — Master Blueprint §8.6):** Teacher may publish media; learners join with media disabled by default; teacher grants/revokes learner mic/camera/screen share. Backend enforces the approved policy.
 - Lesson page/section navigation, teacher-guided or free navigation at a simple level.
 - Centrifugo for application events/presence; not media transport.
 - Basic chat only if required by pilot; do not build a large social messaging system.
