@@ -76,7 +76,7 @@ TutorGrid/
 ├── web/                            # React + TypeScript + Vite responsive web app
 ├── go.mod
 ├── go.sum
-└── Makefile
+└── Taskfile.yml
 ```
 
 ---

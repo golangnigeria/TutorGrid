@@ -4,18 +4,18 @@
 A modular monolith with clear internal domain boundaries, deployed as a small number of workloads. Extract services only when operational or team needs justify it. Keep future extension points, but do not build distributed systems for hypothetical scale.
 
 ## Approved technology decisions
-- React + Vite responsive web frontend.
+- React + Vite + `shadcn/ui` responsive web frontend (see `docs/ADR/0004-frontend-ui-and-toolchain.md` for React 19, TypeScript, and Tailwind CSS v4).
 - Go + Echo backend.
 - PostgreSQL primary durable database; Bun access layer; Goose migrations.
-- Limen auth with Google/GitHub OAuth; no email/password in current scope.
+- Limen auth (`github.com/thecodearcher/limen`) with Google/GitHub OAuth; no email/password in current scope.
 - RBAC + resource permissions; tenant-aware checks; PostgreSQL RLS defense in depth.
 - Redis for cache and ephemeral session state.
 - Centrifugo for application realtime and presence.
-- LiveKit Cloud for audio/video; no self-hosted media in MVP.
-- Backblaze B2 S3-compatible storage.
+- LiveKit (mandatory) — LiveKit Cloud for audio/video; Hetzner Cloud is the future self-hosting candidate, not MVP.
+- Backblaze B2 S3-compatible storage (with local MinIO container sharing the single S3 adapter; production blocked from MinIO).
 - NATS JetStream for durable async jobs/events, small deployment.
 - REST/OpenAPI public interface; gRPC only for a justified internal boundary.
-- Northflank initial deployment candidate, Docker, GitHub Actions, GHCR, Terraform.
+- Northflank initial deployment candidate, Cloudflare DNS/CDN, Docker, GitHub Actions, GHCR, Terraform.
 - OpenTelemetry + Prometheus/Grafana + Sentry.
 
 ## Logical modules
@@ -75,9 +75,9 @@ No Kubernetes, service mesh, multi-region or database sharding in MVP.
 - CRDT-inspired collaboration principles and server-authoritative permissions are architectural direction; exact CRDT library is not yet frozen.
 
 ## LiveKit strategy
-- LiveKit Cloud first; self-hosting on Hetzner is a later cost/operations decision.
+- LiveKit is mandatory for WebRTC media; LiveKit Cloud first, Hetzner Cloud self-hosting is a later cost/operations decision.
 - Go backend controls room creation, token issuance, participant authorization and permission updates.
-- Learners start media disabled; teacher grants/revokes media permissions.
+- **Recommended (Pending Approval — Master Blueprint §8.6):** Learners start media disabled; teacher grants/revokes media permissions.
 - Centrifugo carries classroom app events; LiveKit carries media.
 
 ## Scaling triggers

@@ -1,0 +1,74 @@
+version: '3'
+
+dotenv: ['.env']
+
+vars:
+  COMPOSE_FILE: deployments/docker-compose.dev.yml
+
+tasks:
+  dev:
+    desc: Start PostgreSQL + Redis, run tern migrations, and launch Go API + frontend together
+    cmds:
+      - task: db:up
+      - task: migrate:up
+      - task: dev:servers
+
+  dev:servers:
+    internal: true
+    deps:
+      - dev:api
+      - dev:web
+
+  dev:api:
+    desc: Run the Go + Echo backend (apps/backend)
+    dir: apps/backend
+    cmds:
+      - go run ./cmd/tutorgrid
+
+  dev:web:
+    desc: Run the frontend dev server (apps/frontend)
+    dir: apps/frontend
+    cmds:
+      - bun run dev
+
+  db:up:
+    desc: Start local PostgreSQL 16 and Redis 7 containers and wait until healthy
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up -d --wait
+
+  db:down:
+    desc: Stop local PostgreSQL and Redis containers
+    cmds:
+      - docker compose -f {{.COMPOSE_FILE}} down
+
+  migrate:up:
+    desc: Apply pending tern database migrations
+    dir: apps/backend
+    cmds:
+      - go run ./cmd/migrate
+
+  vet:
+    desc: Run go vet on apps/backend
+    dir: apps/backend
+    cmds:
+      - go vet ./...
+
+  build:api:
+    desc: Build the Go backend and migrator binaries
+    dir: apps/backend
+    cmds:
+      - go build -o NUL ./cmd/tutorgrid
+      - go build -o NUL ./cmd/migrate
+
+  test:go:
+    desc: Run Go tests in apps/backend
+    dir: apps/backend
+    cmds:
+      - go test -p 1 -v -count=1 ./...
+
+  tidy:
+    desc: Tidy and verify Go dependencies in apps/backend
+    dir: apps/backend
+    cmds:
+      - go mod tidy
+      - go mod verify
