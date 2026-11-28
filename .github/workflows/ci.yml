@@ -9,7 +9,7 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: read
@@ -51,6 +51,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Start NATS JetStream
+        run: |
+          docker run -d --name tutorgrid-nats -p 4222:4222 -p 8222:8222 nats:2.10-alpine -js -sd /tmp/nats -m 8222
+          for i in $(seq 1 20); do
+            if curl -sf http://localhost:8222/healthz >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs tutorgrid-nats
+          exit 1
+
       - uses: actions/setup-go@v5
         with:
           go-version: "1.26.x"
@@ -82,10 +94,17 @@ jobs:
           go run ./cmd/migrate -to 2
           go run ./cmd/migrate
 
-      - name: Unit and PostgreSQL RLS Integration Tests
+      - name: Unit, PostgreSQL RLS, NATS JetStream & Opt-In Backblaze B2 Tests
         env:
           TUTORGRID_TEST_DATABASE_MIGRATION_URL: postgres://tutorgrid_migrator:tutorgrid_migrator_dev@localhost:5432/tutorgrid_test?sslmode=disable
           TUTORGRID_TEST_DATABASE_URL: postgres://tutorgrid_app:tutorgrid_app_dev@localhost:5432/tutorgrid_test?sslmode=disable
+          TUTORGRID_TEST_NATS_URL: nats://localhost:4222
+          # Opt-in real Backblaze B2 test bucket secrets (skipped safely on forked PRs where secrets are unavailable)
+          TUTORGRID_TEST_STORAGE_ENDPOINT: ${{ secrets.TUTORGRID_TEST_STORAGE_ENDPOINT }}
+          TUTORGRID_TEST_STORAGE_REGION: ${{ secrets.TUTORGRID_TEST_STORAGE_REGION }}
+          TUTORGRID_TEST_STORAGE_BUCKET: ${{ secrets.TUTORGRID_TEST_STORAGE_BUCKET }}
+          TUTORGRID_TEST_STORAGE_ACCESS_KEY_ID: ${{ secrets.TUTORGRID_TEST_STORAGE_ACCESS_KEY_ID }}
+          TUTORGRID_TEST_STORAGE_SECRET_ACCESS_KEY: ${{ secrets.TUTORGRID_TEST_STORAGE_SECRET_ACCESS_KEY }}
         run: go test -p 1 -race -count=1 -v ./...
 
       - name: Go Vulnerability Check (govulncheck)

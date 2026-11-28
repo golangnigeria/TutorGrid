@@ -1,9 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "motion/react";
-import { Home, Layers, LayoutDashboard } from "lucide-react";
+import { FolderOpen, Home, Layers, LayoutDashboard } from "lucide-react";
+import type { Role } from "@/lib/auth";
 
 export interface MobileFooterDockProps {
   isAuthenticated: boolean;
+  activeRole?: Role | null;
 }
 
 interface DockItem {
@@ -18,14 +20,25 @@ const unauthenticatedItems: DockItem[] = [
   { key: "engines", label: "Engines", to: "/#engines", icon: Layers },
 ];
 
-// Authenticated dock owns pure route navigation only (Sign out lives exclusively in the top right account pill).
-const authenticatedItems: DockItem[] = [
-  { key: "home", label: "Home", to: "/", icon: Home },
-  { key: "dashboard", label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
-];
-
-export function MobileFooterDock({ isAuthenticated }: MobileFooterDockProps) {
+export function MobileFooterDock({ isAuthenticated, activeRole }: MobileFooterDockProps) {
   const location = useLocation();
+
+  const canAccessResources =
+    activeRole === "teacher" ||
+    activeRole === "org_admin" ||
+    activeRole === "platform_admin";
+
+  const authenticatedItems: DockItem[] = canAccessResources
+    ? [
+        { key: "home", label: "Home", to: "/", icon: Home },
+        { key: "dashboard", label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+        { key: "resources", label: "Resources", to: "/resources", icon: FolderOpen },
+      ]
+    : [
+        { key: "home", label: "Home", to: "/", icon: Home },
+        { key: "dashboard", label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
+      ];
+
   const items = isAuthenticated ? authenticatedItems : unauthenticatedItems;
 
   const isActive = (item: DockItem): boolean => {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"strconv"
@@ -19,6 +20,8 @@ type Config struct {
 	Database      DatabaseConfig       `koanf:"database" validate:"required"`
 	Auth          AuthConfig           `koanf:"auth" validate:"required"`
 	Redis         RedisConfig          `koanf:"redis" validate:"required"`
+	NATS          NATSConfig           `koanf:"nats" validate:"required"`
+	Storage       StorageConfig        `koanf:"storage" validate:"required"`
 	Integration   IntegrationConfig    `koanf:"integration" validate:"required"`
 	Observability *ObservabilityConfig `koanf:"observability"`
 }
@@ -50,6 +53,60 @@ type DatabaseConfig struct {
 
 type RedisConfig struct {
 	Address string `koanf:"address" validate:"required"`
+}
+
+type NATSConfig struct {
+	URL string `koanf:"url" validate:"required"`
+}
+
+// StorageConfig configures TutorGrid's Backblaze B2 S3-compatible object storage (ADR 0003).
+// Local MinIO, localhost, and non-HTTPS endpoints are rejected in all environments.
+type StorageConfig struct {
+	Endpoint        string `koanf:"endpoint" validate:"required,url"`
+	Region          string `koanf:"region" validate:"required"`
+	Bucket          string `koanf:"bucket" validate:"required"`
+	AccessKeyID     string `koanf:"access_key_id" validate:"required"`
+	SecretAccessKey string `koanf:"secret_access_key" validate:"required"`
+	UsePathStyle    bool   `koanf:"use_path_style"`
+}
+
+// Validate enforces ADR 0003 Backblaze B2-only security rules across all environments.
+func (s StorageConfig) Validate() error {
+	raw := strings.TrimSpace(s.Endpoint)
+	if raw == "" {
+		return fmt.Errorf("storage endpoint is required")
+	}
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return fmt.Errorf("invalid storage endpoint URL: %w", err)
+	}
+	if !strings.EqualFold(parsed.Scheme, "https") {
+		return fmt.Errorf("storage endpoint must use https:// (got %q); non-HTTPS/local endpoints are disallowed", parsed.Scheme)
+	}
+	host := strings.ToLower(strings.TrimSpace(parsed.Hostname()))
+	if host == "" {
+		return fmt.Errorf("storage endpoint hostname is required")
+	}
+	if host == "localhost" ||
+		host == "127.0.0.1" ||
+		host == "::1" ||
+		host == "0.0.0.0" ||
+		host == "minio" ||
+		strings.Contains(host, "minio") ||
+		strings.HasSuffix(host, ".local") ||
+		strings.HasSuffix(host, ".localhost") {
+		return fmt.Errorf("storage endpoint host %q is disallowed; TutorGrid uses Backblaze B2 exclusively (ADR 0003)", host)
+	}
+	if strings.TrimSpace(s.Region) == "" {
+		return fmt.Errorf("storage region is required")
+	}
+	if strings.TrimSpace(s.Bucket) == "" {
+		return fmt.Errorf("storage bucket is required")
+	}
+	if strings.TrimSpace(s.AccessKeyID) == "" || strings.TrimSpace(s.SecretAccessKey) == "" {
+		return fmt.Errorf("storage access credentials are required")
+	}
+	return nil
 }
 
 type IntegrationConfig struct {
@@ -108,6 +165,12 @@ func LoadConfig() (*Config, error) {
 		Redis: RedisConfig{
 			Address: "localhost:6379",
 		},
+		NATS: NATSConfig{
+			URL: "nats://localhost:4222",
+		},
+		Storage: StorageConfig{
+			UsePathStyle: true,
+		},
 		Integration: IntegrationConfig{
 			FromEmail: "onboarding@resend.dev",
 			FromName:  "TutorGrid Circle",
@@ -135,6 +198,9 @@ func LoadConfig() (*Config, error) {
 	if err := mainConfig.Observability.Validate(); err != nil {
 		logger.Fatal().Err(err).Msg("invalid observability config")
 	}
+	if err := mainConfig.Storage.Validate(); err != nil {
+		logger.Fatal().Err(err).Msg("invalid storage config")
+	}
 
 	return mainConfig, nil
 }
@@ -145,6 +211,24 @@ func applyFlatEnvCompatibility(cfg *Config) {
 	}
 	if cfg.Integration.ResendFromName != "" {
 		cfg.Integration.FromName = cfg.Integration.ResendFromName
+	}
+	if v := os.Getenv("TUTORGRID_NATS_URL"); v != "" && os.Getenv("TUTORGRID_NATS.URL") == "" {
+		cfg.NATS.URL = v
+	}
+	if v := os.Getenv("TUTORGRID_STORAGE_ENDPOINT"); v != "" && os.Getenv("TUTORGRID_STORAGE.ENDPOINT") == "" {
+		cfg.Storage.Endpoint = v
+	}
+	if v := os.Getenv("TUTORGRID_STORAGE_REGION"); v != "" && os.Getenv("TUTORGRID_STORAGE.REGION") == "" {
+		cfg.Storage.Region = v
+	}
+	if v := os.Getenv("TUTORGRID_STORAGE_BUCKET"); v != "" && os.Getenv("TUTORGRID_STORAGE.BUCKET") == "" {
+		cfg.Storage.Bucket = v
+	}
+	if v := os.Getenv("TUTORGRID_STORAGE_ACCESS_KEY_ID"); v != "" && os.Getenv("TUTORGRID_STORAGE.ACCESS_KEY_ID") == "" {
+		cfg.Storage.AccessKeyID = v
+	}
+	if v := os.Getenv("TUTORGRID_STORAGE_SECRET_ACCESS_KEY"); v != "" && os.Getenv("TUTORGRID_STORAGE.SECRET_ACCESS_KEY") == "" {
+		cfg.Storage.SecretAccessKey = v
 	}
 	if v := os.Getenv("TUTORGRID_APP_ENV"); v != "" && os.Getenv("TUTORGRID_PRIMARY.ENV") == "" {
 		cfg.Primary.Env = v

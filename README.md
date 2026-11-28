@@ -16,7 +16,7 @@ Its core product is built around four first-class engines:
 | :--- | :--- | :--- |
 | **Slice 1** | Modular monolith foundation (`go-boilerplate` + `pgx/v5` + `tern`), `Taskfile.yml`, PostgreSQL 16 + Redis 7 Docker dev stack, non-superuser `tutorgrid_app` (`NOBYPASSRLS`) RLS concurrency harness | Completed |
 | **Slice 2 / 2b** | Embedded **Limen** Google & GitHub OAuth (no email/password), PostgreSQL **Dual RLS** (zero `SECURITY DEFINER`), server-bound active workspace switching (`user_active_tenants`), backend RBAC (`platform_admin`, `org_admin`, `teacher`, `learner`), atomic invitations with **Transactional Outbox + Asynq + Resend**, in-app pending invitation discovery, and TutorGrid Circle dark-only React shell (`/`, `/dashboard`, `/sign-in`, `/sign-out`, `/invite`) | Completed |
-| **Slice 3** | Resource Library + unified S3 adapter (MinIO dev / Backblaze B2 staging & prod) | Planned ([`docs/ROADMAP.md`](docs/ROADMAP.md)) |
+| **Slice 3** | **NATS JetStream** single durable job/event backbone (`ADR 0006`, replacing Asynq) + **Backblaze B2-only Resource Library** (`ADR 0003`, no MinIO): 2-step presigned PUT, untrusted-size + magic-byte + OOXML PPTX validation, `Content-Disposition: attachment` downloads (zero inline rendering), constrained `SECURITY DEFINER` reconciler, and `/resources` dark-only UI | Completed |
 | **Slice 4–7** | Lesson Studio, Whiteboard Engine, Live Classroom (LiveKit Cloud + Centrifugo), Activity/Game Engine | Planned ([`docs/ROADMAP.md`](docs/ROADMAP.md)) |
 
 ---
@@ -31,7 +31,9 @@ Approved stack (updated by [`docs/ADR/0005-go-boilerplate-pgx-tern-asynq-newreli
 | **Database & Migrations** | PostgreSQL 16, `pgx/v5` (`pgxpool`, `pgx.StrictNamedArgs` `@snake_case`), `tern` embedded SQL migrations |
 | **Authentication** | Embedded **Limen** (`github.com/thecodearcher/limen`) — Google & GitHub OAuth only |
 | **Authorization & Isolation** | Backend RBAC + per-table PostgreSQL `FORCE ROW LEVEL SECURITY` under non-superuser `tutorgrid_app` |
-| **Cache & Async Jobs** | Redis 7 + **Asynq** |
+| **Cache & Ephemeral State** | Redis 7 (cache, rate limiting, ephemeral coordination, future Centrifugo broker) |
+| **Durable Background Jobs & Events** | **NATS JetStream** (`github.com/nats-io/nats.go`, `ADR 0006`) |
+| **Object Storage** | **Backblaze B2** exclusively via S3-compatible API (`aws-sdk-go-v2/service/s3`, `ADR 0003`; no MinIO) |
 | **Transactional Email** | **Resend** (`resend-go/v2`) via PostgreSQL transactional outbox (`invitation_email_outbox`) |
 | **Observability** | **New Relic APM** (`go-agent/v3`, `nrecho-v4`, `nrpgx5`, `nrredis-v9`) + **Zerolog** structured logging |
 | **Frontend** | React 19 + TypeScript + Vite 7 + Tailwind CSS v4 + `shadcn/ui` + `motion/react` (`apps/frontend`, Bun + Turborepo) |

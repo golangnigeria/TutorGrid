@@ -81,5 +81,18 @@ func NewRouter(s *server.Server, h *handler.Handlers, services *service.Services
 	tenantScoped.DELETE("/invitations/:id", h.Tenancy.RevokeInvitation,
 		middlewares.Auth.RequirePermission(model.PermissionTenantRevokeInvite))
 
+	// tenant-scoped Resource Library routes (Backblaze B2 direct presigned upload/download)
+	resources := authed.Group("/resources", middlewares.Auth.RequireTenant)
+	resources.GET("", h.Resource.List,
+		middlewares.Auth.RequirePermission(model.PermissionResourceRead))
+	resources.POST("/upload-url", h.Resource.RequestUploadURL,
+		middlewares.Auth.RequirePermission(model.PermissionResourceWrite))
+	resources.POST("/:id/complete", h.Resource.CompleteUpload,
+		middlewares.Auth.RequirePermission(model.PermissionResourceWrite))
+	resources.GET("/:id/download-url", h.Resource.GetDownloadURL,
+		middlewares.Auth.RequirePermission(model.PermissionResourceRead))
+	resources.DELETE("/:id", h.Resource.Delete,
+		middlewares.Auth.RequirePermission(model.PermissionResourceWrite))
+
 	return router
 }
