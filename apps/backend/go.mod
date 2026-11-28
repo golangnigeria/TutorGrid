@@ -15,7 +15,7 @@ require (
 	github.com/labstack/echo/v4 v4.16.6
 	github.com/newrelic/go-agent/v3 v3.40.1
 	github.com/newrelic/go-agent/v3/integrations/logcontext-v2/zerologWriter v1.0.4
-	github.com/newrelic/go-agent/v3/integrations/nrecho-v4 v1.1.4
+	github.com/newrelic/go-agent/v3/integrations/nrecho-v4 v1.1.5
 	github.com/newrelic/go-agent/v3/integrations/nrpgx5 v1.3.1
 	github.com/newrelic/go-agent/v3/integrations/nrpkgerrors v1.1.0
 	github.com/newrelic/go-agent/v3/integrations/nrredis-v9 v1.1.1
