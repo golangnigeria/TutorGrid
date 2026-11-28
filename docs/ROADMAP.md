@@ -15,15 +15,15 @@
 
 ---
 
-## Phase 1 — Secure Platform Skeleton *(Auth Done — `slice/02-limen-auth`; Storage Next — Slice 3)*
-- [x] **Slice 2 (Implemented, Pending ADR 0002 Security Review):** Embedded Limen (`github.com/thecodearcher/limen`) Google & GitHub OAuth (no email/password), `limen_*` schema coexistence, verified user/membership lookup deriving `tenancy.Context` server-side (zero client tenant header trust), RBAC baseline (`platform_admin`, `org_admin`, `teacher`, `learner`), onboarding (Create Teaching Space / Accept Invitation), and React sign-in/onboarding shell.
-- [ ] **Slice 3 (Next — Planned in `ADR 0003` & `ADR 0004`):**
-  - Single S3-compatible Go storage adapter shared by **MinIO** (local Docker Compose) and **Backblaze B2** (staging/production), with production guard blocking local/MinIO endpoints.
-  - Two-step direct presigned PUT upload (`pending` → `HeadObject` + magic-byte validation → idempotent `ready`), 25 MB cap, MIME allowlist (PNG, JPEG, WebP, PDF, PPT, PPTX; no raw SVG), 5-min presigned GET, abandoned-upload cleanup, and async malware-scan extension point (ready for NATS JetStream).
-  - Begin progressive adoption of confirmed **`shadcn/ui`** components in `web/` (pending `ADR 0004` sign-off).
-  - Backblaze B2 setup guide (`docs/STORAGE_BACKBLAZE_B2_GUIDE.md`); **mandatory real B2 staging verification** before production reliance (`OD-11`).
+## Phase 1 — Secure Platform Skeleton *(Auth Done — Slice 2b; NATS + B2 Storage In Progress — Slice 3)*
+- [x] **Slice 2 / 2b (Accepted — `ADR 0002`):** Embedded Limen (`github.com/thecodearcher/limen`) Google & GitHub OAuth (no email/password), `limen_*` schema coexistence, PostgreSQL Dual RLS (zero `SECURITY DEFINER`), server-bound active workspace switching (`user_active_tenants`), RBAC (`platform_admin`, `org_admin`, `teacher`, `learner`), atomic email-restricted invitations with transactional outbox + Resend, in-app pending invitation discovery, and TutorGrid Circle dark-only React shell.
+- [ ] **Slice 3 (Stage 1: `ADR 0006` NATS JetStream; Stage 2: `ADR 0003` Backblaze B2-Only Resource Library):**
+  - Restore **NATS JetStream** as the single durable job/event system (removing Asynq and migrating Slice 2b invitation emails onto JetStream).
+  - Single S3-compatible Go storage adapter (`aws-sdk-go-v2/service/s3`) targeting **Backblaze B2 exclusively** across dev, test/CI, staging, and production (no MinIO; separate private dev & test buckets; opt-in live B2 tests that never fall back to dev bucket).
+  - Two-step direct presigned PUT upload (`pending` → `HeadObject` untrusted-size check + magic-byte + deep OOXML PPTX validation → idempotent `ready`), 25 MB cap, MIME allowlist (PNG, JPEG, WebP, PDF, PPT, PPTX; no raw SVG), 5-min `Content-Disposition: attachment` presigned GET (zero inline rendering), durable partial-failure reconciliation (`deleting` state + JetStream retries + bounded periodic reconciler via non-login/`NOBYPASSRLS` pointer function), and `malware_scan_status = 'pending'` extension point (**mandatory real malware-scanning gate required before broader learner-facing resource delivery**).
+  - Dedicated `/resources` Resource Library route in TutorGrid Circle's dark-only shell (teachers/admins only; uploader-or-admin delete).
 
-**Exit gate:** Authenticated users access only authorized tenant resources; direct presigned uploads, magic-byte validation, tenant isolation, and CI checks pass; `ADR 0002` security review completed.
+**Exit gate:** NATS JetStream is the sole durable job system, authenticated users access only authorized tenant resources, direct B2 presigned uploads, magic-byte + PPTX OOXML validation, partial-failure reconciliation, tenant RLS isolation, and CI checks pass.
 
 ---
 

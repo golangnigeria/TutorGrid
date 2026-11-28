@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 
 	"github.com/tutorgrid/tutorgrid/internal/lib/job"
@@ -30,25 +29,9 @@ var (
 
 var slugRegex = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{1,46}[a-z0-9]$`)
 
-// TaskEnqueuer abstracts Asynq enqueueing so outbox failure/retry paths are deterministically testable.
+// TaskEnqueuer abstracts NATS JetStream job publishing so outbox failure/retry paths are deterministically testable.
 type TaskEnqueuer interface {
 	EnqueueInvitationEmail(ctx context.Context, tenantID, outboxID uuid.UUID) error
-}
-
-type asynqTaskEnqueuer struct {
-	client *asynq.Client
-}
-
-func (e *asynqTaskEnqueuer) EnqueueInvitationEmail(ctx context.Context, tenantID, outboxID uuid.UUID) error {
-	if e.client == nil {
-		return errors.New("asynq client not initialized")
-	}
-	task, err := job.NewTenantInvitationEmailTask(tenantID, outboxID)
-	if err != nil {
-		return err
-	}
-	_, err = e.client.EnqueueContext(ctx, task)
-	return err
 }
 
 type TenancyService struct {
@@ -65,8 +48,8 @@ func NewTenancyService(
 	logger *zerolog.Logger,
 ) *TenancyService {
 	var enq TaskEnqueuer
-	if jobSvc != nil && jobSvc.Client != nil {
-		enq = &asynqTaskEnqueuer{client: jobSvc.Client}
+	if jobSvc != nil {
+		enq = jobSvc
 	}
 	return &TenancyService{
 		repo:            repo,

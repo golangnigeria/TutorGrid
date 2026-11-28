@@ -11,7 +11,7 @@ To accelerate backend production readiness with Clean Architecture (`handlers` â
 ## Decisions
 1. **Authentication:** Replaced boilerplate's Clerk SDK with embedded **Limen** (`github.com/thecodearcher/limen`, `adapters/sql` via `pgx/v5/stdlib`, `plugins/oauth`, `plugins/oauth-google`, `plugins/oauth-github`; no email/password).
 2. **Database Access & Migrations:** Substituted **`pgx/v5` (`pgxpool`) + `tern`** in place of **Bun + Goose**. PostgreSQL Row-Level Security (`FORCE ROW LEVEL SECURITY`) and transaction-scoped `set_config('app.current_tenant_id', $1, true)` remain mandatory via `database.RunInTenantTx`.
-3. **Background Jobs:** Substituted **Asynq (Redis-backed queue)** in place of **NATS JetStream** for MVP background processing.
+3. **Background Jobs:** *(Superseded by [`ADR 0006`](./0006-nats-jetstream-durable-jobs.md) on 2026-11-28 â€” restored **NATS JetStream** as the single durable job/event system and removed Asynq.)*
 4. **Observability:** Substituted **New Relic APM** (+ Zerolog structured logging) in place of **OpenTelemetry + Prometheus/Grafana + Sentry**. Real `TUTORGRID_OBSERVABILITY.NEW_RELIC.LICENSE_KEY` is required before local/staging/prod execution.
 5. **Transactional Email:** Adopted boilerplate's **Resend** integration (`TUTORGRID_INTEGRATION.RESEND_API_KEY` required).
 6. **Monorepo & Task Runner:** Adopted `apps/backend` + `apps/frontend` + `packages/*` (Turborepo) coordinated via root [`Taskfile.yml`](../../Taskfile.yml) (no `Makefile` or `scripts/`).

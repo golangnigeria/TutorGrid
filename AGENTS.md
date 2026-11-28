@@ -24,10 +24,11 @@ Before changing code, read `docs/MASTER_BLUEPRINT.md`, `docs/PRODUCT_CONSTITUTIO
 - Data: PostgreSQL, `pgx/v5` (`pgxpool`) for data access, `tern` migrations (per `ADR 0005`).
 - Authentication: Limen (`github.com/thecodearcher/limen`); Google and GitHub OAuth; no email/password login (replaced Clerk).
 - Authorization: RBAC plus resource-level permissions; tenant-aware backend checks and PostgreSQL RLS as defense in depth.
-- Cache & Background Jobs: Redis + Asynq (per `ADR 0005`).
+- Cache & Ephemeral Coordination: Redis (cache, rate limiting, ephemeral session coordination, Centrifugo broker).
+- Durable Background Jobs & Events: NATS JetStream (`github.com/nats-io/nats.go`, per `ADR 0006`; supersedes Asynq from `ADR 0005`).
 - Application realtime: Centrifugo.
 - Media: LiveKit (mandatory) — LiveKit Cloud initially; Hetzner Cloud self-hosting is a later evaluation, not MVP.
-- Object storage: Backblaze B2 via S3-compatible abstraction (MinIO container in local dev sharing the single S3 adapter; production blocked from MinIO).
+- Object storage: Backblaze B2 exclusively via S3-compatible abstraction (`aws-sdk-go-v2/service/s3`, per `ADR 0003` — no MinIO in local dev or CI; separate private dev & test buckets; non-HTTPS/localhost/MinIO endpoints rejected in all environments).
 - Email: Resend (real `TUTORGRID_INTEGRATION.RESEND_API_KEY` required).
 - API: REST + OpenAPI for external/public use; gRPC only where useful internally.
 - Hosting & Edge: Northflank candidate/initial deployment, Cloudflare DNS/CDN, Docker, GitHub Actions, GHCR, Terraform.

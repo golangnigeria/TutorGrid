@@ -51,12 +51,16 @@ func New(cfg *config.Config, logger *zerolog.Logger, loggerService *loggerPkg.Lo
 		// Don't fail startup if Redis is unavailable
 	}
 
-	// job service
-	jobService := job.NewJobService(logger, cfg)
+	// Durable background job service (NATS JetStream — ADR 0006)
+	jobService, err := job.NewJobService(logger, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize NATS JetStream job service: %w", err)
+	}
 	jobService.InitHandlers(cfg, logger)
 
-	// Start job server
+	// Start durable JetStream consumers
 	if err := jobService.Start(); err != nil {
+		jobService.Stop()
 		return nil, err
 	}
 

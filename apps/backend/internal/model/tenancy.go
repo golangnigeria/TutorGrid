@@ -29,12 +29,14 @@ func (r Role) Valid() bool {
 type Permission string
 
 const (
-	PermissionTenantReadMembers    Permission = "tenant:members:read"
-	PermissionTenantInviteMember   Permission = "tenant:members:invite"
-	PermissionTenantRevokeInvite   Permission = "tenant:invitations:revoke"
-	PermissionLessonAuthor         Permission = "lesson:author"
-	PermissionClassroomHost        Permission = "classroom:host"
-	PermissionClassroomJoin        Permission = "classroom:join"
+	PermissionTenantReadMembers  Permission = "tenant:members:read"
+	PermissionTenantInviteMember Permission = "tenant:members:invite"
+	PermissionTenantRevokeInvite Permission = "tenant:invitations:revoke"
+	PermissionResourceRead       Permission = "resource:read"
+	PermissionResourceWrite      Permission = "resource:write"
+	PermissionLessonAuthor       Permission = "lesson:author"
+	PermissionClassroomHost      Permission = "classroom:host"
+	PermissionClassroomJoin      Permission = "classroom:join"
 )
 
 var rolePermissions = map[Role]map[Permission]bool{
@@ -42,6 +44,8 @@ var rolePermissions = map[Role]map[Permission]bool{
 		PermissionTenantReadMembers:  true,
 		PermissionTenantInviteMember: true,
 		PermissionTenantRevokeInvite: true,
+		PermissionResourceRead:       true,
+		PermissionResourceWrite:      true,
 		PermissionLessonAuthor:       true,
 		PermissionClassroomHost:      true,
 		PermissionClassroomJoin:      true,
@@ -50,12 +54,16 @@ var rolePermissions = map[Role]map[Permission]bool{
 		PermissionTenantReadMembers:  true,
 		PermissionTenantInviteMember: true,
 		PermissionTenantRevokeInvite: true,
+		PermissionResourceRead:       true,
+		PermissionResourceWrite:      true,
 		PermissionLessonAuthor:       true,
 		PermissionClassroomHost:      true,
 		PermissionClassroomJoin:      true,
 	},
 	RoleTeacher: {
 		PermissionTenantReadMembers: true,
+		PermissionResourceRead:      true,
+		PermissionResourceWrite:     true,
 		PermissionLessonAuthor:      true,
 		PermissionClassroomHost:     true,
 		PermissionClassroomJoin:     true,

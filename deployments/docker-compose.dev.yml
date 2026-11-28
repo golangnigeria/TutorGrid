@@ -28,5 +28,21 @@ services:
       timeout: 3s
       retries: 15
 
+  nats:
+    image: nats:2.10-alpine
+    container_name: tutorgrid-nats
+    command: ["-js", "-sd", "/data", "-m", "8222"]
+    ports:
+      - "${NATS_PORT:-4222}:4222"
+      - "${NATS_MONITOR_PORT:-8222}:8222"
+    volumes:
+      - tutorgrid_natsdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8222/healthz || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+
 volumes:
   tutorgrid_pgdata:
+  tutorgrid_natsdata:

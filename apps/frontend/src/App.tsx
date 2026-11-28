@@ -17,6 +17,7 @@ import { Hero34 } from "@/components/ui/hero-34";
 import { TutorGridLockup } from "@/components/TutorGridLogo";
 import { OnboardingView } from "@/components/OnboardingView";
 import { WorkspaceView } from "@/components/WorkspaceView";
+import { ResourcesView } from "@/components/ResourcesView";
 import "./index.css";
 
 const PENDING_INVITE_STORAGE_KEY = "tg_pending_invite_token";
@@ -364,6 +365,37 @@ function DashboardPage({ session, onRefreshMe }: DashboardPageProps) {
   return <WorkspaceView me={session.me} onRefreshMe={onRefreshMe} />;
 }
 
+function ResourcesPage({ session }: { session: SessionState }) {
+  if (session.status === "loading") {
+    return (
+      <div
+        role="status"
+        className="mx-auto my-12 flex max-w-md items-center justify-center gap-3 rounded-2xl border border-[#F3F0E8]/14 bg-[#181F1A]/82 px-6 py-8 text-sm text-[#A6B0A8] backdrop-blur-md"
+      >
+        <span className="h-2 w-2 animate-pulse rounded-full bg-[#8FAF94]" />
+        Loading resource library...
+      </div>
+    );
+  }
+  if (session.status === "error") {
+    return (
+      <div
+        role="alert"
+        className="mx-auto my-12 max-w-md rounded-2xl border border-[#D97373]/40 bg-[#181F1A]/88 p-4 text-sm text-[#F4C2C2] backdrop-blur-md"
+      >
+        {session.message}
+      </div>
+    );
+  }
+  if (session.status === "unauthenticated") {
+    return <Navigate to="/sign-in?next=/resources" replace />;
+  }
+  if (session.me.memberships.length === 0) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <ResourcesView me={session.me} />;
+}
+
 function HomeRoute({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [searchParams] = useSearchParams();
   const legacyInvite = searchParams.get("invite");
@@ -412,6 +444,11 @@ function App() {
     setSession({ status: "unauthenticated" });
   }, []);
 
+  const activeRole =
+    session.status === "authenticated"
+      ? session.me.memberships.find((m) => m.tenant_id === session.me.active_tenant_id)?.role ?? null
+      : null;
+
   return (
     <MotionConfig reducedMotion="user">
       <Toaster
@@ -459,11 +496,15 @@ function App() {
               path="/dashboard"
               element={<DashboardPage session={session} onRefreshMe={loadSession} />}
             />
+            <Route path="/resources" element={<ResourcesPage session={session} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 
-        <MobileFooterDock isAuthenticated={session.status === "authenticated"} />
+        <MobileFooterDock
+          isAuthenticated={session.status === "authenticated"}
+          activeRole={activeRole}
+        />
       </div>
     </MotionConfig>
   );
