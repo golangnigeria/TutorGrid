@@ -185,8 +185,8 @@ github.com/newrelic/go-agent/v3/integrations/nrpgx5 v1.3.1 h1:dF3ZxV4Y8fSKUVaG6q
 github.com/newrelic/go-agent/v3/integrations/nrpgx5 v1.3.1/go.mod h1:iAU42DcrqzYiFqfqciwgnl+y11MAiSGvjwVf3s1MuGc=
 github.com/newrelic/go-agent/v3/integrations/nrpkgerrors v1.1.0 h1:TmAihIxCqgz3v9OR19J7mK2ggEQjGdhz2FEOvszU1SI=
 github.com/newrelic/go-agent/v3/integrations/nrpkgerrors v1.1.0/go.mod h1:yXUqcAzlKNVIsSyoaI2ILdpvBeMCz3Ko/ASl4Vbg2i4=
-github.com/newrelic/go-agent/v3/integrations/nrredis-v9 v1.1.1 h1:IW3rmAGBWc8V7uNBNyb2BWVTBSyNnC730CeiRmsBNVE=
-github.com/newrelic/go-agent/v3/integrations/nrredis-v9 v1.1.1/go.mod h1:TQC2+0VXNTPWoW3APy/nKS8sNo5MPMd4o+FDoOSPyB8=
+github.com/newrelic/go-agent/v3/integrations/nrredis-v9 v1.1.2 h1:Yi8MH7fw8RqfILmGSc4yf0AysoNrlHdihJPMqfpT8xY=
+github.com/newrelic/go-agent/v3/integrations/nrredis-v9 v1.1.2/go.mod h1:8YQCdVir0v8y+Ovc7Oi/hwakevRAuymDNj806kjSE/k=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
 github.com/opencontainers/go-digest v1.0.0/go.mod h1:0JzlMkj0TRzQZfJkVvzbP0HBR3IKzErnv2BNG4W4MAM=
 github.com/opencontainers/image-spec v1.1.1 h1:y0fUlFfIZhPF1W537XOLg0/fcx6zcHCJwooC2xJA040=
